@@ -4,108 +4,136 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=320, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        /* --- YOUR EXISTING STYLES --- */
-        body { 
-            margin: 0; background: #222; color: #444; 
-            font-family: monospace; overflow: hidden;
+        /* --- E-INK PDA PALETTE --- */
+        :root {
+            --paper: #dcdcdc;      /* The classic grey-ish E-ink background */
+            --ink: #2b2b2b;        /* Deep charcoal ink */
+            --ghost: #c0c0c0;      /* Faded ink for borders */
+            --border-thick: 3px solid #2b2b2b;
         }
+
+        body { 
+            margin: 0; background: #000; color: var(--ink); 
+            font-family: "Courier New", Courier, monospace; 
+            overflow: hidden;
+            text-transform: uppercase; /* PDA Style */
+        }
+
+        /* SCREEN LAYOUT */
         .top-screen { 
             width: 320px; height: 212px; 
-            background: #fdfcf0; border-bottom: 4px solid #7d6e83; 
+            background: var(--paper); border-bottom: 5px double var(--ink); 
             position: relative; overflow: hidden;
+            box-sizing: border-box;
         }
         .bottom-screen { 
             width: 320px; height: 240px; 
-            background: #e8f4f8; border-top: 4px solid #7d6e83;
+            background: var(--paper); 
+            box-sizing: border-box;
         }
+
+        /* E-INK APP STYLING */
         .win { display: none; padding: 10px; height: 100%; box-sizing: border-box; }
         .active { display: block; }
-        .menu { display: block; width: 100%; text-align: center; padding: 5px 0; }
+
+        /* PDA BUTTONS */
+        .menu { display: block; width: 100%; text-align: center; padding: 5px 0; border-bottom: 2px solid var(--ink); }
         .btn { 
-            display: inline-block; background: #ffdfba; 
-            border: 2px solid #7d6e83; padding: 5px; 
-            margin: 2px; font-size: 10px; font-weight: bold;
+            display: inline-block; background: var(--paper); 
+            border: var(--border-thick); padding: 4px; 
+            margin: 1px; font-size: 9px; font-weight: 900;
+            box-shadow: 2px 2px 0px var(--ink);
         }
-        canvas { background: #000; display: block; margin: 0 auto; border: 1px solid #7d6e83; }
+        .btn:active { background: var(--ink); color: var(--paper); box-shadow: none; }
 
-        /* --- ADDING POSITION LOCK (FIXED FOR 3DS) --- */
-        #main-wrapper {
-            position: absolute;
-            top: 0; left: 0;
-            width: 320px;
+        /* PIXEL ART BORDERS */
+        canvas { background: var(--paper); display: block; margin: 0 auto; border: var(--border-thick); image-rendering: pixelated; }
+
+        /* THE E-INK FLASH EFFECT */
+        #flash {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; opacity: 0; pointer-events: none; z-index: 999;
         }
 
-        /* --- SKETCH & MUSIC EXTRAS --- */
-        #sketchCanvas { background: white; cursor: crosshair; }
-        .song-btn { display: block; width: 80%; margin: 5px auto; background: #b2e2f2; border: 1px solid #7d6e83; font-size: 10px; }
+        #in { 
+            background: var(--paper); border: var(--border-thick); 
+            width: 80%; margin: 5px 10%; color: var(--ink); 
+        }
     </style>
 </head>
 <body scroll="no">
 
-<div id="main-wrapper">
+<div id="flash"></div>
+
+<div id="main-wrapper" style="position: absolute; top: 0; left: 0; width: 320px;">
     <div class="top-screen">
         <div id="w1" class="win active">
-            <b style="font-size:10px;">NOTEPAD</b><hr>
-            <div id="note-out">System Ready...</div>
+            <div style="border: 2px solid var(--ink); padding: 2px; font-weight: bold; font-size: 10px; margin-bottom: 5px;">> MEMO_PAD</div>
+            <div id="note-out" style="font-size: 12px; line-height: 1.2;">READY_FOR_INPUT...</div>
         </div>
 
         <div id="w2" class="win">
-            <canvas id="canvas" width="160" height="100"></canvas>
-            <div style="font-size:10px; text-align:center;">Score: <span id="s1">0</span> | Best: <span id="s2">0</span></div>
+            <div style="font-size: 8px; margin-bottom: 2px;">SNAKE.EXE</div>
+            <canvas id="canvas" width="160" height="100" style="filter: grayscale(1);"></canvas>
+            <div style="font-size:10px; text-align:center; border-top: 1px dashed var(--ink); margin-top:5px;">
+                PTS:<span id="s1">0</span> HI:<span id="s2">0</span>
+            </div>
         </div>
 
         <div id="w3" class="win" style="text-align:center;">
-            <h2 id="clicks">0</h2>
-            <div id="cookie-vis" style="width:30px; height:30px; background:#ffb7b2; margin:0 auto; border-radius:50%;"></div>
-            <div style="font-size:10px;">Autos: <span id="autos">0</span></div>
+            <div style="font-size: 10px; border: 1px solid var(--ink);">CLICKER_UNIT</div>
+            <h1 id="clicks" style="font-size: 40px; margin: 10px 0;">0</h1>
+            <div id="cookie-vis" style="width:30px; height:30px; border: 3px solid var(--ink); margin:0 auto;"></div>
         </div>
 
         <div id="w4" class="win">
-            <b style="font-size:10px;">SKETCHBOOK</b><hr>
-            <canvas id="sketchCanvas" width="280" height="150"></canvas>
+            <div style="font-size: 10px;">SKETCH_v1.0</div>
+            <canvas id="sketchCanvas" width="280" height="150" style="background: white; border: 1px solid var(--ink);"></canvas>
         </div>
 
         <div id="w5" class="win" style="text-align:center;">
-            <b style="font-size:10px;">ONGAKU PLAYER</b><hr>
-            <div id="music-stat" style="margin-top:20px;">Stopped</div>
-            <div style="font-size:30px; margin-top:10px;">🎵</div>
+            <div style="font-size: 10px;">ONGAKU_PDA</div>
+            <div id="music-stat" style="margin-top:20px; border: 2px solid var(--ink); padding: 5px;">STOPPED</div>
+            <div style="font-size:40px; margin-top:10px;">💾</div>
         </div>
     </div>
 
     <div class="bottom-screen">
         <div class="menu">
-            <div class="btn" onclick="go('w1')">TXT</div>
-            <div class="btn" onclick="go('w2')">SNK</div>
-            <div class="btn" onclick="go('w3')">CLK</div>
+            <div class="btn" onclick="go('w1')">MEMO</div>
+            <div class="btn" onclick="go('w2')">GAME</div>
+            <div class="btn" onclick="go('w3')">CNTR</div>
             <div class="btn" onclick="go('w4')">DRAW</div>
-            <div class="btn" onclick="go('w5')">MUS</div>
+            <div class="btn" onclick="go('w5')">MUSC</div>
         </div>
 
-        <div style="text-align:center;">
-            <button class="btn" style="width:40px;" onclick="dir(0,-1)">U</button><br>
-            <button class="btn" style="width:30px;" onclick="dir(-1,0)">L</button>
-            <button class="btn" style="width:80px;" onclick="act()">OK / TAP</button>
-            <button class="btn" style="width:30px;" onclick="dir(1,0)">R</button><br>
-            <button class="btn" style="width:40px;" onclick="dir(0,1)">D</button>
+        <div style="text-align:center; padding-top: 5px;">
+            <button class="btn" style="width:40px;" onclick="dir(0,-1)">↑</button><br>
+            <button class="btn" style="width:40px;" onclick="dir(-1,0)">←</button>
+            <button class="btn" style="width:80px; height: 40px;" onclick="act()">EXECUTE</button>
+            <button class="btn" style="width:40px;" onclick="dir(1,0)">→</button><br>
+            <button class="btn" style="width:40px;" onclick="dir(0,1)">↓</button>
         </div>
 
-        <div id="input-area">
-            <input type="text" id="in" placeholder="Type..." oninput="sync()" style="width:80%; margin:5px 10%;">
-        </div>
-
-        <div id="music-ui" style="display:none; text-align:center;">
-            <button class="song-btn" onclick="playM('Lo-fi Beat')">Track 01: Lo-fi</button>
-            <button class="song-btn" onclick="playM('Pastel Jam')">Track 02: Pastel</button>
-            <button class="btn" onclick="stopM()">STOP</button>
+        <input type="text" id="in" placeholder="INPUT DATA..." oninput="sync()">
+        
+        <div id="shop" style="display:none; text-align:center;">
+            <button class="btn" onclick="buy()">UPGRADE_AUTO (10pts)</button>
         </div>
     </div>
 </div>
 
 <script>
-    // THE FIX: Scroll to top immediately and lock
+    // E-INK REFRESH EFFECT
+    function refreshScreen() {
+        var f = document.getElementById('flash');
+        f.style.opacity = '0.8';
+        setTimeout(function(){ f.style.opacity = '0'; }, 80);
+    }
+
+    // LOCKING
     window.scrollTo(0,0);
     document.addEventListener('touchmove', function(e) { 
-        // Only allow touchmove on the Sketch Canvas, block it everywhere else
         if(e.target.id !== 'sketchCanvas') { e.preventDefault(); }
     }, { passive: false });
 
@@ -113,11 +141,11 @@
     var pts = 0; var auto = 0; var hi = 0;
 
     function go(id) {
+        refreshScreen(); // Flash like a real E-ink screen
         var wins = ['w1','w2','w3','w4','w5'];
         for(var i=0; i<wins.length; i++) { document.getElementById(wins[i]).className = 'win'; }
         document.getElementById(id).className = 'win active';
-        document.getElementById('music-ui').style.display = (id=='w5') ? 'block' : 'none';
-        document.getElementById('input-area').style.display = (id=='w1') ? 'block' : 'none';
+        document.getElementById('shop').style.display = (id=='w3') ? 'block' : 'none';
         cur = id;
         if(id=='w2') start();
         if(id=='w4') initSketch();
@@ -125,28 +153,26 @@
 
     function sync() { document.getElementById('note-out').innerHTML = document.getElementById('in').value; }
     function act() { if(cur == 'w3') { pts++; up(); } }
-    function up() { document.getElementById('clicks').innerHTML = Math.floor(pts); document.getElementById('autos').innerHTML = auto; }
+    function up() { document.getElementById('clicks').innerHTML = Math.floor(pts); }
     setInterval(function(){ if(auto>0){ pts += 0.1; up(); } }, 100);
 
-    // --- MUSIC LOGIC (PROJECT ONGAKU) ---
-    function playM(t) { document.getElementById('music-stat').innerHTML = "Playing: " + t; }
-    function stopM() { document.getElementById('music-stat').innerHTML = "Stopped"; }
+    // MUSIC
+    function playM(t) { document.getElementById('music-stat').innerHTML = "PLAYING: " + t; }
 
-    // --- SKETCH LOGIC (SKETCHBOOK) ---
+    // SKETCH
     var sk = document.getElementById('sketchCanvas'), skCtx = sk.getContext('2d'), drawing = false;
     function initSketch() {
-        sk.ontouchstart = function(e) { drawing = true; skCtx.beginPath(); };
+        sk.ontouchstart = function() { drawing = true; skCtx.beginPath(); };
         sk.ontouchmove = function(e) {
             if(!drawing) return;
-            var t = e.touches[0];
-            var rect = sk.getBoundingClientRect();
-            skCtx.lineTo(t.clientX - rect.left, t.clientY - rect.top);
-            skCtx.strokeStyle = '#7d6e83'; skCtx.stroke();
+            var t = e.touches[0]; var r = sk.getBoundingClientRect();
+            skCtx.lineTo(t.clientX - r.left, t.clientY - r.top);
+            skCtx.lineWidth = 2; skCtx.stroke();
         };
         sk.ontouchend = function() { drawing = false; };
     }
 
-    // --- SNAKE --- (Keeping your working version)
+    // SNAKE (E-INK VERSION)
     var c = document.getElementById("canvas"), x = c.getContext("2d");
     var s, f, vx, vy, iv;
     function dir(nx,ny) { vx=nx; vy=ny; }
@@ -161,10 +187,10 @@
                 f = {x: Math.floor(Math.random()*19), y: Math.floor(Math.random()*11)};
                 document.getElementById('s1').innerHTML = s.length-1;
             } else { s.pop(); }
-            x.fillStyle="#000"; x.fillRect(0,0,160,100);
-            x.fillStyle="#b8e994"; for(var i=0;i<s.length;i++) x.fillRect(s[i].x*8,s[i].y*8,7,7);
-            x.fillStyle="#ffb7b2"; x.fillRect(f.x*8,f.y*8,7,7);
-        }, 200);
+            x.fillStyle="#dcdcdc"; x.fillRect(0,0,160,100);
+            x.fillStyle="#2b2b2b"; for(var i=0;i<s.length;i++) x.fillRect(s[i].x*8,s[i].y*8,6,6);
+            x.strokeRect(f.x*8,f.y*8,6,6); // Food is an outline
+        }, 250);
     }
 </script>
 
