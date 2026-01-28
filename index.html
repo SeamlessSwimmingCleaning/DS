@@ -4,44 +4,42 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=320, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        /* --- THE LOCKDOWN CSS --- */
-        html, body {
+        /* PDA THEME */
+        :root { --bg: #d4d4d4; --ink: #1a1a1a; --border: 2px solid #1a1a1a; }
+
+        /* THE FIX: No fixed position. Just a tall, unscrollable block. */
+        body, html {
             margin: 0; padding: 0;
             width: 320px;
-            height: 452px; /* 212 + 240 */
-            overflow: hidden !important; /* Forces scrollbars away */
-            position: fixed; /* Glues the page to the top-left corner */
+            height: 452px; /* Top (212) + Bottom (240) */
             background: #000;
-            touch-action: none; /* Modern browser lock */
-            -ms-touch-action: none; /* IE/3DS lock */
+            font-family: "Courier New", monospace;
+            overflow: hidden; /* This stops the scrollbar */
         }
-
-        /* PDA COLORS */
-        :root { --bg: #d4d4d4; --ink: #1a1a1a; --border: 2px solid #1a1a1a; }
 
         #pda-shell {
             width: 320px;
             height: 452px;
             background: var(--bg);
-            position: absolute;
-            top: 0; left: 0;
         }
 
+        /* TOP AREA */
         .display {
             width: 320px; height: 212px;
             background: var(--bg);
             border-bottom: 4px double var(--ink);
-            box-sizing: border-box; padding: 5px;
+            box-sizing: border-box; padding: 10px;
         }
 
+        /* BOTTOM AREA */
         .digitizer {
             width: 320px; height: 240px;
             background: var(--bg);
-            box-sizing: border-box; padding: 5px;
+            box-sizing: border-box; padding: 10px;
         }
 
-        /* APPS */
-        .win { display: none; height: 160px; border: 1px solid var(--ink); background: #eee; padding: 5px; font-size: 10px; }
+        /* APPS & UI */
+        .win { display: none; height: 150px; border: 1px solid var(--ink); background: #eee; padding: 5px; font-size: 10px; }
         .active { display: block; }
         .taskbar { display: table; width: 100%; border-spacing: 2px; }
         .app-btn {
@@ -50,25 +48,24 @@
         }
         .pad-btn { display: inline-block; width: 40px; height: 30px; background: var(--bg); border: var(--border); font-size: 10px; }
         
-        #memo-list { padding: 0; list-style: none; margin: 0; }
-        .memo-item { border-bottom: 1px solid var(--ink); margin-bottom: 2px; }
-
+        #memo-list { padding: 0; list-style: none; margin: 0; height: 120px; overflow-y: scroll; }
+        .memo-item { border-bottom: 1px solid var(--ink); padding: 2px 0; }
     </style>
 </head>
-<body>
+<body scroll="no">
 
 <div id="pda-shell">
     <div class="display">
-        <div style="font-size: 8px; border-bottom: 1px solid #000;">PDA_v1.0_LOCKED</div>
+        <div style="font-size: 9px; font-weight: bold; margin-bottom: 4px; border-bottom: 1px solid var(--ink);">E-INK PDA v2.0</div>
         
         <div id="w_memo" class="win active">
-            <b>MEMO_LOG:</b>
-            <ul id="memo-list"><li>- SYSTEM_OK</li></ul>
+            <b>MEMO_STORAGE:</b>
+            <ul id="memo-list"><li>- SYSTEM LOADED</li></ul>
         </div>
 
-        <div id="w1" class="win"><div id="out">READY...</div></div>
+        <div id="w1" class="win"><div id="out">TERMINAL READY...</div></div>
         <div id="w2" class="win"><canvas id="snk" width="160" height="100"></canvas></div>
-        <div id="w4" class="win"><canvas id="draw" width="280" height="140"></canvas></div>
+        <div id="w4" class="win"><canvas id="draw" width="280" height="130"></canvas></div>
     </div>
 
     <div class="digitizer">
@@ -79,7 +76,7 @@
             <div class="app-btn" onclick="nav('w4')">SKTCH</div>
         </div>
 
-        <div style="text-align:center; margin-top: 10px;">
+        <div style="text-align:center; margin-top: 15px;">
             <button class="pad-btn" onclick="mv(0,-1)">UP</button><br>
             <button class="pad-btn" onclick="mv(-1,0)">L</button>
             <button class="pad-btn" style="width:60px;" onclick="saveMemo()">SAVE</button>
@@ -87,36 +84,28 @@
             <button class="pad-btn" onclick="mv(0,1)">DN</button>
         </div>
 
-        <input type="text" id="kb" placeholder="WRITE..." style="width:90%; margin:10px 5%; border:1px solid #000; background:transparent;">
+        <input type="text" id="kb" placeholder="WRITE DATA..." style="width:90%; margin:15px 5% 0 5%; border:1px solid #000; background:transparent;">
     </div>
 </div>
 
 <script>
-    /* --- THE ANTI-SCROLL SCRIPT --- */
+    /* --- NEW ADDITION: THE STATIC SNAP --- */
     
-    // 1. Force Scroll Reset
-    function forceReset() {
-        if (window.scrollY !== 0 || window.scrollX !== 0) {
-            window.scrollTo(0, 0);
-        }
-    }
-    // Check every 100ms to see if the page moved
-    setInterval(forceReset, 100);
-
-    // 2. Kill Touch Dragging
+    // This tells the browser to never allow the user to drag the page
     document.addEventListener('touchmove', function(e) {
-        // Allow drawing on the sketch pad, block everything else
+        // If we are NOT drawing, kill the scroll
         if (e.target.id !== 'draw') {
             e.preventDefault();
         }
     }, { passive: false });
 
-    // 3. Prevent Focus Zoom
-    var input = document.getElementById('kb');
-    input.addEventListener('focus', function() {
-        // 3DS zooms when you click an input; this tries to fight it
-        window.scrollTo(0, 0);
-    });
+    // If the 3DS browser shifts (like when the keyboard pops up), snap back
+    function snap() {
+        if (window.scrollY !== 0) {
+            window.scrollTo(0, 0);
+        }
+    }
+    setInterval(snap, 300);
 
     /* --- PDA LOGIC --- */
     var cur = 'w_memo';
@@ -137,6 +126,9 @@
             nav('w_memo');
         }
     }
+    
+    // Basic Snake/Sketch placeholders to keep buttons working
+    function mv(x,y){ /* snake logic here */ }
 </script>
 </body>
 </html>
