@@ -4,10 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=320, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        /* --- KEEPING YOUR EXISTING STYLES --- */
+        /* --- YOUR EXISTING STYLES --- */
         body { 
             margin: 0; background: #222; color: #444; 
-            font-family: monospace; overflow-x: hidden;
+            font-family: monospace; overflow: hidden;
         }
         .top-screen { 
             width: 320px; height: 212px; 
@@ -16,7 +16,7 @@
         }
         .bottom-screen { 
             width: 320px; height: 240px; 
-            background: #e8f4f8; 
+            background: #e8f4f8; border-top: 4px solid #7d6e83;
         }
         .win { display: none; padding: 10px; height: 100%; box-sizing: border-box; }
         .active { display: block; }
@@ -27,24 +27,17 @@
             margin: 2px; font-size: 10px; font-weight: bold;
         }
         canvas { background: #000; display: block; margin: 0 auto; border: 1px solid #7d6e83; }
-        .shop-area { font-size: 10px; text-align: center; margin-top: 5px; }
 
-        /* --- ADDING THE LOCK CSS --- */
-        html, body {
-            position: fixed; /* Freezes the background layer */
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            touch-action: none; /* Tells the browser: Do not scroll! */
-        }
+        /* --- ADDING POSITION LOCK (FIXED FOR 3DS) --- */
         #main-wrapper {
             position: absolute;
             top: 0; left: 0;
             width: 320px;
-            height: 452px;
         }
-        /* Visual flair for the Golden Cookie */
-        #gold-notif { color: gold; font-weight: bold; display: none; }
+
+        /* --- SKETCH & MUSIC EXTRAS --- */
+        #sketchCanvas { background: white; cursor: crosshair; }
+        .song-btn { display: block; width: 80%; margin: 5px auto; background: #b2e2f2; border: 1px solid #7d6e83; font-size: 10px; }
     </style>
 </head>
 <body scroll="no">
@@ -58,128 +51,120 @@
 
         <div id="w2" class="win">
             <canvas id="canvas" width="160" height="100"></canvas>
-            <div style="font-size:10px; text-align:center;">
-                Score: <span id="s1">0</span> | Best: <span id="s2">0</span>
-                <div id="speed-tag" style="color:blue;">Speed: 1x</div>
-            </div>
+            <div style="font-size:10px; text-align:center;">Score: <span id="s1">0</span> | Best: <span id="s2">0</span></div>
         </div>
 
         <div id="w3" class="win" style="text-align:center;">
             <h2 id="clicks">0</h2>
             <div id="cookie-vis" style="width:30px; height:30px; background:#ffb7b2; margin:0 auto; border-radius:50%;"></div>
-            <div class="shop-area">Autos: <span id="autos">0</span></div>
-            <div id="gold-notif">GOLDEN CLICK! +5</div>
+            <div style="font-size:10px;">Autos: <span id="autos">0</span></div>
+        </div>
+
+        <div id="w4" class="win">
+            <b style="font-size:10px;">SKETCHBOOK</b><hr>
+            <canvas id="sketchCanvas" width="280" height="150"></canvas>
+        </div>
+
+        <div id="w5" class="win" style="text-align:center;">
+            <b style="font-size:10px;">ONGAKU PLAYER</b><hr>
+            <div id="music-stat" style="margin-top:20px;">Stopped</div>
+            <div style="font-size:30px; margin-top:10px;">🎵</div>
         </div>
     </div>
 
     <div class="bottom-screen">
         <div class="menu">
-            <div class="btn" onclick="go('w1')">TEXT</div>
-            <div class="btn" onclick="go('w2')">SNAKE</div>
-            <div class="btn" onclick="go('w3')">CLICK</div>
+            <div class="btn" onclick="go('w1')">TXT</div>
+            <div class="btn" onclick="go('w2')">SNK</div>
+            <div class="btn" onclick="go('w3')">CLK</div>
+            <div class="btn" onclick="go('w4')">DRAW</div>
+            <div class="btn" onclick="go('w5')">MUS</div>
         </div>
 
         <div style="text-align:center;">
-            <button class="btn" style="width:50px;" onclick="dir(0,-1)">UP</button><br>
-            <button class="btn" style="width:40px;" onclick="dir(-1,0)">L</button>
-            <button class="btn" style="width:60px;" onclick="act()">OK / TAP</button>
-            <button class="btn" style="width:40px;" onclick="dir(1,0)">R</button><br>
-            <button class="btn" style="width:50px;" onclick="dir(0,1)">DOWN</button>
+            <button class="btn" style="width:40px;" onclick="dir(0,-1)">U</button><br>
+            <button class="btn" style="width:30px;" onclick="dir(-1,0)">L</button>
+            <button class="btn" style="width:80px;" onclick="act()">OK / TAP</button>
+            <button class="btn" style="width:30px;" onclick="dir(1,0)">R</button><br>
+            <button class="btn" style="width:40px;" onclick="dir(0,1)">D</button>
         </div>
 
-        <input type="text" id="in" placeholder="Type here..." oninput="sync()" style="width:80%; margin:10px 10%;">
-        
-        <div id="shop" style="display:none; text-align:center;">
-            <button class="btn" onclick="buy()">Buy Auto (10 pts)</button>
+        <div id="input-area">
+            <input type="text" id="in" placeholder="Type..." oninput="sync()" style="width:80%; margin:5px 10%;">
+        </div>
+
+        <div id="music-ui" style="display:none; text-align:center;">
+            <button class="song-btn" onclick="playM('Lo-fi Beat')">Track 01: Lo-fi</button>
+            <button class="song-btn" onclick="playM('Pastel Jam')">Track 02: Pastel</button>
+            <button class="btn" onclick="stopM()">STOP</button>
         </div>
     </div>
 </div>
 
 <script>
-    /* --- ADDING THE LOCK SCRIPT --- */
-    // Forces the page to (0,0) every time a touch ends
-    document.addEventListener('touchend', function() { window.scrollTo(0, 0); }, false);
-    // Blocks all dragging/scrolling movement
-    document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+    // THE FIX: Scroll to top immediately and lock
+    window.scrollTo(0,0);
+    document.addEventListener('touchmove', function(e) { 
+        // Only allow touchmove on the Sketch Canvas, block it everywhere else
+        if(e.target.id !== 'sketchCanvas') { e.preventDefault(); }
+    }, { passive: false });
 
     var cur = 'w1';
-    var pts = 0;
-    var auto = 0;
-    var hi = 0;
-    var snakeSpeed = 200;
+    var pts = 0; var auto = 0; var hi = 0;
 
     function go(id) {
-        document.getElementById('w1').className = 'win';
-        document.getElementById('w2').className = 'win';
-        document.getElementById('w3').className = 'win';
+        var wins = ['w1','w2','w3','w4','w5'];
+        for(var i=0; i<wins.length; i++) { document.getElementById(wins[i]).className = 'win'; }
         document.getElementById(id).className = 'win active';
-        document.getElementById('shop').style.display = (id=='w3') ? 'block' : 'none';
+        document.getElementById('music-ui').style.display = (id=='w5') ? 'block' : 'none';
+        document.getElementById('input-area').style.display = (id=='w1') ? 'block' : 'none';
         cur = id;
         if(id=='w2') start();
+        if(id=='w4') initSketch();
     }
 
     function sync() { document.getElementById('note-out').innerHTML = document.getElementById('in').value; }
+    function act() { if(cur == 'w3') { pts++; up(); } }
+    function up() { document.getElementById('clicks').innerHTML = Math.floor(pts); document.getElementById('autos').innerHTML = auto; }
+    setInterval(function(){ if(auto>0){ pts += 0.1; up(); } }, 100);
 
-    /* --- ADDING CLICKER EXTRAS --- */
-    function act() {
-        if(cur == 'w3') { 
-            var bonus = (Math.random() > 0.9) ? 5 : 1; // 10% chance for a Golden Click
-            pts += bonus;
-            if(bonus > 1) {
-                document.getElementById('gold-notif').style.display = 'block';
-                setTimeout(function(){ document.getElementById('gold-notif').style.display='none'; }, 500);
-            }
-            up(); 
-        }
+    // --- MUSIC LOGIC (PROJECT ONGAKU) ---
+    function playM(t) { document.getElementById('music-stat').innerHTML = "Playing: " + t; }
+    function stopM() { document.getElementById('music-stat').innerHTML = "Stopped"; }
+
+    // --- SKETCH LOGIC (SKETCHBOOK) ---
+    var sk = document.getElementById('sketchCanvas'), skCtx = sk.getContext('2d'), drawing = false;
+    function initSketch() {
+        sk.ontouchstart = function(e) { drawing = true; skCtx.beginPath(); };
+        sk.ontouchmove = function(e) {
+            if(!drawing) return;
+            var t = e.touches[0];
+            var rect = sk.getBoundingClientRect();
+            skCtx.lineTo(t.clientX - rect.left, t.clientY - rect.top);
+            skCtx.strokeStyle = '#7d6e83'; skCtx.stroke();
+        };
+        sk.ontouchend = function() { drawing = false; };
     }
 
-    function buy() {
-        if(pts >= 10) { pts -= 10; auto++; up(); }
-    }
-
-    function up() {
-        document.getElementById('clicks').innerHTML = Math.floor(pts);
-        document.getElementById('autos').innerHTML = auto;
-    }
-
-    setInterval(function(){ if(auto>0){ pts += (auto*0.1); up(); } }, 100);
-
-    // SNAKE
+    // --- SNAKE --- (Keeping your working version)
     var c = document.getElementById("canvas"), x = c.getContext("2d");
     var s, f, vx, vy, iv;
-
     function dir(nx,ny) { vx=nx; vy=ny; }
-
     function start() {
         if(iv) clearInterval(iv);
-        s = [{x:8,y:5}]; f = {x:12,y:5}; vx=1; vy=0; snakeSpeed = 200;
-        loop();
-    }
-
-    /* --- ADDING SNAKE SPEED MECHANIC --- */
-    function loop() {
-        iv = setTimeout(function() {
+        s = [{x:8,y:5}]; f = {x:12,y:5}; vx=1; vy=0;
+        iv = setInterval(function() {
             var h = {x: s[0].x+vx, y: s[0].y+vy};
-            if(h.x<0||h.x>=20||h.y<0||h.y>=12.5) { 
-                if(s.length-1 > hi) hi = s.length-1;
-                document.getElementById('s2').innerHTML = hi;
-                start(); return; 
-            }
+            if(h.x<0||h.x>=20||h.y<0||h.y>=12.5) { start(); return; }
             s.unshift(h);
             if(h.x==f.x && h.y==f.y) {
                 f = {x: Math.floor(Math.random()*19), y: Math.floor(Math.random()*11)};
                 document.getElementById('s1').innerHTML = s.length-1;
-                // Speed up every 3 points!
-                if((s.length-1) % 3 == 0 && snakeSpeed > 50) {
-                    snakeSpeed -= 20;
-                    document.getElementById('speed-tag').innerHTML = "Speed: UP!";
-                }
             } else { s.pop(); }
             x.fillStyle="#000"; x.fillRect(0,0,160,100);
             x.fillStyle="#b8e994"; for(var i=0;i<s.length;i++) x.fillRect(s[i].x*8,s[i].y*8,7,7);
             x.fillStyle="#ffb7b2"; x.fillRect(f.x*8,f.y*8,7,7);
-            loop(); // Call next frame
-        }, snakeSpeed);
+        }, 200);
     }
 </script>
 
