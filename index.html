@@ -2,9 +2,9 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=320">
+    <meta name="viewport" content="width=320, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
-        /* Pastel Palette */
+        /* --- KEEPING YOUR EXISTING STYLES --- */
         body { 
             margin: 0; background: #222; color: #444; 
             font-family: monospace; overflow-x: hidden;
@@ -18,73 +18,95 @@
             width: 320px; height: 240px; 
             background: #e8f4f8; 
         }
-
-        /* Windows */
         .win { display: none; padding: 10px; height: 100%; box-sizing: border-box; }
         .active { display: block; }
-
-        /* Buttons */
         .menu { display: block; width: 100%; text-align: center; padding: 5px 0; }
         .btn { 
             display: inline-block; background: #ffdfba; 
             border: 2px solid #7d6e83; padding: 5px; 
             margin: 2px; font-size: 10px; font-weight: bold;
         }
-        
-        /* Games */
         canvas { background: #000; display: block; margin: 0 auto; border: 1px solid #7d6e83; }
         .shop-area { font-size: 10px; text-align: center; margin-top: 5px; }
+
+        /* --- ADDING THE LOCK CSS --- */
+        html, body {
+            position: fixed; /* Freezes the background layer */
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            touch-action: none; /* Tells the browser: Do not scroll! */
+        }
+        #main-wrapper {
+            position: absolute;
+            top: 0; left: 0;
+            width: 320px;
+            height: 452px;
+        }
+        /* Visual flair for the Golden Cookie */
+        #gold-notif { color: gold; font-weight: bold; display: none; }
     </style>
 </head>
-<body>
+<body scroll="no">
 
-<div class="top-screen">
-    <div id="w1" class="win active">
-        <b style="font-size:10px;">NOTEPAD</b><hr>
-        <div id="note-out">System Ready...</div>
-    </div>
+<div id="main-wrapper">
+    <div class="top-screen">
+        <div id="w1" class="win active">
+            <b style="font-size:10px;">NOTEPAD</b><hr>
+            <div id="note-out">System Ready...</div>
+        </div>
 
-    <div id="w2" class="win">
-        <canvas id="canvas" width="160" height="100"></canvas>
-        <div style="font-size:10px; text-align:center;">
-            Score: <span id="s1">0</span> | Best: <span id="s2">0</span>
+        <div id="w2" class="win">
+            <canvas id="canvas" width="160" height="100"></canvas>
+            <div style="font-size:10px; text-align:center;">
+                Score: <span id="s1">0</span> | Best: <span id="s2">0</span>
+                <div id="speed-tag" style="color:blue;">Speed: 1x</div>
+            </div>
+        </div>
+
+        <div id="w3" class="win" style="text-align:center;">
+            <h2 id="clicks">0</h2>
+            <div id="cookie-vis" style="width:30px; height:30px; background:#ffb7b2; margin:0 auto; border-radius:50%;"></div>
+            <div class="shop-area">Autos: <span id="autos">0</span></div>
+            <div id="gold-notif">GOLDEN CLICK! +5</div>
         </div>
     </div>
 
-    <div id="w3" class="win" style="text-align:center;">
-        <h2 id="clicks">0</h2>
-        <div style="width:30px; height:30px; background:#ffb7b2; margin:0 auto; border-radius:50%;"></div>
-        <div class="shop-area">Autos: <span id="autos">0</span></div>
-    </div>
-</div>
+    <div class="bottom-screen">
+        <div class="menu">
+            <div class="btn" onclick="go('w1')">TEXT</div>
+            <div class="btn" onclick="go('w2')">SNAKE</div>
+            <div class="btn" onclick="go('w3')">CLICK</div>
+        </div>
 
-<div class="bottom-screen">
-    <div class="menu">
-        <div class="btn" onclick="go('w1')">TEXT</div>
-        <div class="btn" onclick="go('w2')">SNAKE</div>
-        <div class="btn" onclick="go('w3')">CLICK</div>
-    </div>
+        <div style="text-align:center;">
+            <button class="btn" style="width:50px;" onclick="dir(0,-1)">UP</button><br>
+            <button class="btn" style="width:40px;" onclick="dir(-1,0)">L</button>
+            <button class="btn" style="width:60px;" onclick="act()">OK / TAP</button>
+            <button class="btn" style="width:40px;" onclick="dir(1,0)">R</button><br>
+            <button class="btn" style="width:50px;" onclick="dir(0,1)">DOWN</button>
+        </div>
 
-    <div style="text-align:center;">
-        <button class="btn" style="width:50px;" onclick="dir(0,-1)">UP</button><br>
-        <button class="btn" style="width:40px;" onclick="dir(-1,0)">L</button>
-        <button class="btn" style="width:60px;" onclick="act()">OK / TAP</button>
-        <button class="btn" style="width:40px;" onclick="dir(1,0)">R</button><br>
-        <button class="btn" style="width:50px;" onclick="dir(0,1)">DOWN</button>
-    </div>
-
-    <input type="text" id="in" placeholder="Type here..." oninput="sync()" style="width:80%; margin:10px 10%;">
-    
-    <div id="shop" style="display:none; text-align:center;">
-        <button class="btn" onclick="buy()">Buy Auto (10 pts)</button>
+        <input type="text" id="in" placeholder="Type here..." oninput="sync()" style="width:80%; margin:10px 10%;">
+        
+        <div id="shop" style="display:none; text-align:center;">
+            <button class="btn" onclick="buy()">Buy Auto (10 pts)</button>
+        </div>
     </div>
 </div>
 
 <script>
+    /* --- ADDING THE LOCK SCRIPT --- */
+    // Forces the page to (0,0) every time a touch ends
+    document.addEventListener('touchend', function() { window.scrollTo(0, 0); }, false);
+    // Blocks all dragging/scrolling movement
+    document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+
     var cur = 'w1';
     var pts = 0;
     var auto = 0;
     var hi = 0;
+    var snakeSpeed = 200;
 
     function go(id) {
         document.getElementById('w1').className = 'win';
@@ -98,8 +120,17 @@
 
     function sync() { document.getElementById('note-out').innerHTML = document.getElementById('in').value; }
 
+    /* --- ADDING CLICKER EXTRAS --- */
     function act() {
-        if(cur == 'w3') { pts++; up(); }
+        if(cur == 'w3') { 
+            var bonus = (Math.random() > 0.9) ? 5 : 1; // 10% chance for a Golden Click
+            pts += bonus;
+            if(bonus > 1) {
+                document.getElementById('gold-notif').style.display = 'block';
+                setTimeout(function(){ document.getElementById('gold-notif').style.display='none'; }, 500);
+            }
+            up(); 
+        }
     }
 
     function buy() {
@@ -121,8 +152,13 @@
 
     function start() {
         if(iv) clearInterval(iv);
-        s = [{x:8,y:5}]; f = {x:12,y:5}; vx=1; vy=0;
-        iv = setInterval(function() {
+        s = [{x:8,y:5}]; f = {x:12,y:5}; vx=1; vy=0; snakeSpeed = 200;
+        loop();
+    }
+
+    /* --- ADDING SNAKE SPEED MECHANIC --- */
+    function loop() {
+        iv = setTimeout(function() {
             var h = {x: s[0].x+vx, y: s[0].y+vy};
             if(h.x<0||h.x>=20||h.y<0||h.y>=12.5) { 
                 if(s.length-1 > hi) hi = s.length-1;
@@ -133,11 +169,17 @@
             if(h.x==f.x && h.y==f.y) {
                 f = {x: Math.floor(Math.random()*19), y: Math.floor(Math.random()*11)};
                 document.getElementById('s1').innerHTML = s.length-1;
+                // Speed up every 3 points!
+                if((s.length-1) % 3 == 0 && snakeSpeed > 50) {
+                    snakeSpeed -= 20;
+                    document.getElementById('speed-tag').innerHTML = "Speed: UP!";
+                }
             } else { s.pop(); }
             x.fillStyle="#000"; x.fillRect(0,0,160,100);
             x.fillStyle="#b8e994"; for(var i=0;i<s.length;i++) x.fillRect(s[i].x*8,s[i].y*8,7,7);
             x.fillStyle="#ffb7b2"; x.fillRect(f.x*8,f.y*8,7,7);
-        }, 200);
+            loop(); // Call next frame
+        }, snakeSpeed);
     }
 </script>
 
