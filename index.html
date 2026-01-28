@@ -1,139 +1,172 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=320, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=320, user-scalable=no">
+    <title>Supermarket 3DS</title>
     <style>
-        /* PDA THEME */
-        :root { --bg: #d4d4d4; --ink: #1a1a1a; --border: 2px solid #1a1a1a; }
-
-        /* THE LOCK: We force the body to be the exact height of the 3DS layout */
-        body, html {
-            margin: 226; padding: 226;
-            width: 320px;
-            height: 452px; 
-            background: #000;
-            font-family: "Courier New", monospace;
-            overflow: hidden; /* Stops accidental scrolling */
-        }
-
-        /* Container that holds both screens */
-        #pda-shell {
-            width: 320px;
-            height: 452px;
-            background: var(--bg);
-            display: block;
-        }
-
-        /* TOP SCREEN: Hardware height is approx 212px in browser */
-        .display {
-            width: 320px; 
-            height: 212px;
-            background: var(--bg);
-            border-bottom: 4px double var(--ink);
-            box-sizing: border-box; 
-            padding: 10px;
-        }
-
-        /* BOTTOM SCREEN: Hardware height 240px */
-        .digitizer {
-            width: 320px; 
-            height: 240px;
-            background: var(--bg);
-            box-sizing: border-box; 
-            padding: 10px;
-            border-top: 1px solid var(--ink); /* Visual gap for the hinge */
-        }
-
-        /* APPS */
-        .win { display: none; height: 145px; border: 1px solid var(--ink); background: #eee; padding: 5px; font-size: 10px; }
-        .active { display: block; }
-        .taskbar { display: table; width: 100%; border-spacing: 2px; }
-        .app-btn {
-            display: table-cell; background: var(--bg); border: var(--border);
-            font-size: 8px; text-align: center; height: 25px; vertical-align: middle; font-weight: bold;
-        }
-        .pad-btn { display: inline-block; width: 40px; height: 30px; background: var(--bg); border: var(--border); font-size: 10px; }
+        body { margin: 0; background-color: #2c3e50; font-family: sans-serif; color: white; overflow: hidden; }
         
-        #memo-list { padding: 0; list-style: none; margin: 0; height: 110px; overflow-y: auto; }
-        .memo-item { border-bottom: 1px solid var(--ink); padding: 2px 0; font-size: 9px; }
+        /* Using Floats/Inline-block instead of Grid for 3DS compatibility */
+        #lobby { padding: 5px; text-align: center; background: #95a5a6; height: 180px; overflow-y: auto; }
+        .store-section {
+            display: inline-block; width: 90px; height: 60px; 
+            margin: 4px; background: #bdc3c7; border: 2px solid #7f8c8d; 
+            vertical-align: top; color: #2c3e50; text-align: center;
+        }
+        .section-icon { font-size: 24px; display: block; }
+        .section-label { font-size: 9px; font-weight: bold; }
+
+        #game-screen { display: none; background: #ecf0f1; height: 100vh; width: 100%; position: relative; }
+        
+        #ui-bar { height: 40px; background: #333; font-size: 10px; padding: 2px; }
+        
+        /* Shelf area - Simplified for older WebKit */
+        .shelf-area { height: 120px; overflow: auto; background: #8b5a2b; white-space: nowrap; }
+        .slot { 
+            display: inline-block; width: 40px; height: 40px; 
+            background: rgba(0,0,0,0.2); margin: 5px; border-radius: 4px; 
+        }
+
+        .item {
+            position: absolute; width: 38px; height: 38px; background: white;
+            border-radius: 5px; text-align: center; line-height: 38px;
+            font-size: 24px; z-index: 10; border: 1px solid #ccc;
+        }
+
+        #floor { height: 80px; background: #bdc3c7; border-top: 4px solid #757d7f; position: relative; }
+        #truck { position: absolute; font-size: 30px; bottom: 5px; left: -50px; }
+        
+        #customer-zone {
+            position: absolute; bottom: 0; right: 5px; 
+            color: black; font-size: 10px; text-align: center;
+        }
+
+        /* Simplified animations - 3DS struggles with complex transforms */
+        .item-gold { border: 2px solid #f1c40f; }
+        
+        .btn { background: #27ae60; color: white; border: none; padding: 4px; font-size: 10px; }
     </style>
 </head>
-<body scroll="no">
+<body>
 
-<div id="pda-shell">
-    <div class="display">
-        <div style="font-size: 9px; font-weight: bold; border-bottom: 1px solid var(--ink);">PDA_OS_v3.0</div>
-        
-        <div id="w_memo" class="win active">
-            <b>MEMO_LOG:</b>
-            <ul id="memo-list"><li>- SYSTEM_READY</li></ul>
-        </div>
-
-        <div id="w1" class="win"><div id="out">TERMINAL...</div></div>
-        <div id="w2" class="win"><canvas id="snk" width="160" height="100"></canvas></div>
-        <div id="w4" class="win"><canvas id="draw" width="280" height="120"></canvas></div>
-    </div>
-
-    <div class="digitizer">
-        <div class="taskbar">
-            <div class="app-btn" onclick="nav('w_memo')">MEMO</div>
-            <div class="app-btn" onclick="nav('w1')">TERM</div>
-            <div class="app-btn" onclick="nav('w2')">GAME</div>
-            <div class="app-btn" onclick="nav('w4')">SKTCH</div>
-        </div>
-
-        <div style="text-align:center; margin-top: 10px;">
-            <button class="pad-btn" onclick="mv(0,-1)">UP</button><br>
-            <button class="pad-btn" onclick="mv(-1,0)">L</button>
-            <button class="pad-btn" style="width:60px;" onclick="saveMemo()">SAVE</button>
-            <button class="pad-btn" onclick="mv(1,0)">R</button><br>
-            <button class="pad-btn" onclick="mv(0,1)">DN</button>
-        </div>
-
-        <input type="text" id="kb" placeholder="DATA_ENTRY..." style="width:90%; margin:10px 5% 0 5%; border:1px solid #000; background:transparent;">
+<div id="lobby-container">
+    <div style="padding: 5px; font-size: 12px;">STORE MAP</div>
+    <div id="lobby">
+        <div class="store-section" onclick="enterAisle('fruit')"><span class="section-icon">🍎</span><span class="section-label">Fruit</span></div>
+        <div class="store-section" onclick="enterAisle('veg')"><span class="section-icon">🥦</span><span class="section-label">Veg</span></div>
+        <div class="store-section" onclick="enterAisle('dairy')"><span class="section-icon">🧀</span><span class="section-label">Dairy</span></div>
+        <div class="store-section" onclick="enterAisle('bakery')"><span class="section-icon">🍞</span><span class="section-label">Bakery</span></div>
+        <div class="store-section" onclick="enterAisle('meat')"><span class="section-icon">🍗</span><span class="section-label">Meat</span></div>
+        <div class="store-section" onclick="enterAisle('drinks')"><span class="section-icon">🥤</span><span class="section-label">Drinks</span></div>
     </div>
 </div>
 
+<div id="game-screen">
+    <div id="ui-bar">
+        <button class="btn" onclick="exitAisle()">Back</button>
+        <span id="lvl-txt">LVL 1</span>
+        <button class="btn" onclick="triggerTruck()">+ Stock</button>
+    </div>
+    <div class="shelf-area" id="shelf-area"></div>
+    <div id="floor">
+        <div id="truck">🚛</div>
+        <div id="customer-zone">
+            <div id="bubble">WANT: <span id="target">?</span></div>
+            <div style="font-size:30px">🧔</div>
+        </div>
+    </div>
+    <div id="items-layer"></div>
+</div>
+
 <script>
-    /* --- THE LOCK AND BRIDGE ADDITION --- */
-    
-    // This blocks the stylus from dragging the page around
-    document.addEventListener('touchmove', function(e) {
-        if (e.target.id !== 'draw' && e.target.id !== 'memo-list') {
+    var currentAisle = null, activeItem = null;
+    var managerXP = 0, managerLvl = 1;
+    var config = {
+        fruit: ['🍎','🍏','🍌','🍊'],
+        veg: ['🥦','🌽','🥕','🍅'],
+        dairy: ['🥛','🧀','🥚'],
+        bakery: ['🍞','🥐','🥨'],
+        drinks: ['🥤','🧃','☕'],
+        meat: ['🍗','🥩','🐟']
+    };
+
+    function enterAisle(type) {
+        currentAisle = type;
+        document.getElementById('lobby-container').style.display = 'none';
+        document.getElementById('game-screen').style.display = 'block';
+        setupShelves();
+        spawnInitialItems();
+    }
+
+    function exitAisle() {
+        document.getElementById('lobby-container').style.display = 'block';
+        document.getElementById('game-screen').style.display = 'none';
+        document.getElementById('items-layer').innerHTML = '';
+    }
+
+    function setupShelves() {
+        var area = document.getElementById('shelf-area');
+        area.innerHTML = '';
+        for(var i=0; i<12; i++) {
+            var slot = document.createElement('div');
+            slot.className = 'slot';
+            area.appendChild(slot);
+        }
+    }
+
+    function createItem(emoji, x, y) {
+        var div = document.createElement('div');
+        div.className = 'item';
+        div.innerHTML = emoji;
+        div.style.left = x + 'px';
+        div.style.top = y + 'px';
+        
+        // Use touch events for 3DS stylus
+        div.ontouchstart = function(e) {
+            activeItem = div;
+            div.style.zIndex = 100;
+        };
+        document.getElementById('items-layer').appendChild(div);
+    }
+
+    function spawnInitialItems() {
+        var items = config[currentAisle];
+        for(var i=0; i<5; i++) {
+            createItem(items[Math.floor(Math.random()*items.length)], Math.random()*250, 160 + Math.random()*20);
+        }
+    }
+
+    function triggerTruck() {
+        var truck = document.getElementById('truck');
+        var pos = -50;
+        var id = setInterval(function() {
+            if (pos >= 350) {
+                clearInterval(id);
+            } else {
+                pos += 5;
+                truck.style.left = pos + 'px';
+                if(pos % 100 === 0) {
+                    var items = config[currentAisle];
+                    createItem(items[Math.floor(Math.random()*items.length)], pos, 180);
+                }
+            }
+        }, 50);
+    }
+
+    // Single touch handler for moving items
+    document.ontouchmove = function(e) {
+        if(activeItem) {
+            var touch = e.touches[0];
+            activeItem.style.left = (touch.clientX - 20) + 'px';
+            activeItem.style.top = (touch.clientY - 20) + 'px';
             e.preventDefault();
         }
-    }, { passive: false });
+    };
 
-    // This ensures that when the page loads, it is centered exactly between screens
-    function alignScreens() {
-        window.scrollTo(0, 0);
-    }
-    
-    // Run alignment immediately and every time a button is clicked
-    window.onload = alignScreens;
-    setInterval(alignScreens, 500);
-
-    /* --- PDA FUNCTIONS --- */
-    var cur = 'w_memo';
-    function nav(id) {
-        document.getElementById(cur).classList.remove('active');
-        document.getElementById(id).classList.add('active');
-        cur = id;
-        alignScreens(); // Re-lock view on app switch
-    }
-
-    function saveMemo() {
-        var val = document.getElementById('kb').value;
-        if(val) {
-            var li = document.createElement('li');
-            li.className = 'memo-item';
-            li.innerHTML = "> " + val;
-            document.getElementById('memo-list').appendChild(li);
-            document.getElementById('kb').value = "";
-            nav('w_memo');
-        }
-    }
+    document.ontouchend = function(e) {
+        activeItem = null;
+    };
 </script>
 </body>
 </html>
