@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <style>
+        /* Pixel aesthetic and Pastel Palette */
+        :root {
+            --bg-top: #f0e6ef; /* Pastel Lavender */
+            --bg-bottom: #e0f2f1; /* Pastel Mint */
+            --border: #9575cd;
+            --text: #5e35b1;
+            --accent: #ffccbc; /* Pastel Orange */
+        }
+
+        body, html {
+            margin: 0; padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+            background: #333;
+            color: var(--text);
+            overflow: hidden;
+            image-rendering: pixelated;
+        }
+
+        /* Container for the 3DS screens */
+        .device {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* TOP SCREEN: The Desktop */
+        .top-screen {
+            width: 400px;
+            height: 240px;
+            background: var(--bg-top);
+            border: 4px solid var(--border);
+            position: relative;
+            box-sizing: border-box;
+            padding: 10px;
+        }
+
+        .window {
+            border: 2px solid var(--border);
+            background: white;
+            width: 150px;
+            height: 100px;
+            padding: 5px;
+            font-size: 10px;
+        }
+
+        /* BOTTOM SCREEN: The Input */
+        .bottom-screen {
+            width: 320px;
+            height: 240px;
+            background: var(--bg-bottom);
+            border: 4px solid var(--border);
+            margin-top: 10px;
+            box-sizing: border-box;
+            display: grid;
+            grid-template-rows: 1fr 2fr;
+        }
+
+        .text-editor-input {
+            width: 90%;
+            height: 50px;
+            margin: 10px auto;
+            border: 2px solid var(--border);
+            padding: 5px;
+            font-size: 12px;
+        }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 5px;
+            padding: 10px;
+        }
+
+        .key {
+            background: var(--accent);
+            border: 2px solid var(--border);
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .key:active { background: white; }
+
+        .icon {
+            width: 32px;
+            height: 32px;
+            background: var(--accent);
+            border: 2px solid var(--border);
+            display: inline-block;
+            margin: 5px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="device">
+    <div class="top-screen" id="desktop">
+        <div style="font-size: 12px; font-weight: bold;">Pastel-OS v1.0</div>
+        <div class="icon"></div>
+        <div class="icon"></div>
+        
+        <div class="window" id="output">
+            <b>NotePad:</b><br>
+            <span id="displayText">Type on the bottom screen...</span>
+        </div>
+    </div>
+
+    <div class="bottom-screen">
+        <textarea class="text-editor-input" id="inputBox" placeholder="Tap to type..."></textarea>
+        
+        <div class="keypad">
+            <div class="key" onclick="app('Editor')">DOC</div>
+            <div class="key" onclick="app('Snake')">GAME</div>
+            <div class="key" onclick="app('Settings')">SET</div>
+            <div class="key" onclick="location.reload()">RST</div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const input = document.getElementById('inputBox');
+    const display = document.getElementById('displayText');
+
+    // Simple Text Sync
+    input.addEventListener('input', function() {
+        display.innerText = input.value;
+    });
+
+    function app(name) {
+        alert("Launching " + name + "...");
+    }
+</script>
+
+</body>
+</html>
