@@ -2,218 +2,142 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=320, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="apple-mobile-web-app-capable" content="yes"> 
+    <meta name="viewport" content="width=320">
     <style>
-        :root {
-            --bg-top: #fdfcf0; 
-            --bg-bottom: #e8f4f8; 
-            --border: #7d6e83; 
-            --accent: #ffdfba; 
-            --shop: #b2e2f2;
+        /* Pastel Palette */
+        body { 
+            margin: 0; background: #222; color: #444; 
+            font-family: monospace; overflow-x: hidden;
+        }
+        .top-screen { 
+            width: 320px; height: 212px; 
+            background: #fdfcf0; border-bottom: 4px solid #7d6e83; 
+            position: relative; overflow: hidden;
+        }
+        .bottom-screen { 
+            width: 320px; height: 240px; 
+            background: #e8f4f8; 
         }
 
-        /* SUPER-LOCK CSS */
-        body, html {
-            margin: 0; padding: 0;
-            width: 320px;
-            height: 452px;
-            overflow: hidden; /* Hides scrollbars */
-            position: fixed; /* Pins the entire page */
-            background: #222;
-            font-family: 'Courier New', monospace;
-            image-rendering: pixelated;
-            touch-action: none; /* Modern lock */
-            -ms-touch-action: none; /* 3DS/Old IE lock */
-        }
-
-        .screen-top {
-            width: 320px;
-            height: 212px;
-            background: var(--bg-top);
-            border: 2px solid var(--border);
-            position: relative;
-        }
-
-        .screen-bottom {
-            width: 320px;
-            height: 240px;
-            background: var(--bg-bottom);
-            border: 2px solid var(--border);
-        }
-
-        .window { display: none; padding: 10px; height: 100%; box-sizing: border-box; }
+        /* Windows */
+        .win { display: none; padding: 10px; height: 100%; box-sizing: border-box; }
         .active { display: block; }
 
-        .grid { display: table; width: 100%; border-spacing: 5px; }
-        .btn {
-            display: table-cell;
-            background: var(--accent);
-            border: 3px solid var(--border);
-            height: 35px;
-            vertical-align: middle;
-            text-align: center;
-            font-size: 10px;
-            font-weight: bold;
+        /* Buttons */
+        .menu { display: block; width: 100%; text-align: center; padding: 5px 0; }
+        .btn { 
+            display: inline-block; background: #ffdfba; 
+            border: 2px solid #7d6e83; padding: 5px; 
+            margin: 2px; font-size: 10px; font-weight: bold;
         }
-
-        #s { background: #1a1a1a; display: block; margin: 0 auto; border: 2px solid var(--border); }
         
-        #kb { width: 90%; margin: 5px 5%; border: 2px solid var(--border); font-size: 14px; }
-
-        /* Clicker Shop Style */
-        .shop-btn {
-            background: var(--shop);
-            border: 2px solid var(--border);
-            font-size: 9px;
-            margin-top: 5px;
-            padding: 2px;
-        }
+        /* Games */
+        canvas { background: #000; display: block; margin: 0 auto; border: 1px solid #7d6e83; }
+        .shop-area { font-size: 10px; text-align: center; margin-top: 5px; }
     </style>
 </head>
-<body scroll="no">
+<body>
 
-<div id="main-container">
-    <div class="screen-top">
-        <div id="win-txt" class="window active">
-            <div style="font-size: 10px; border-bottom: 1px solid #ccc;">NOTEPAD.EXE</div>
-            <p id="output" style="font-size: 12px; word-wrap: break-word;">System Ready. Use the input below.</p>
-        </div>
+<div class="top-screen">
+    <div id="w1" class="win active">
+        <b style="font-size:10px;">NOTEPAD</b><hr>
+        <div id="note-out">System Ready...</div>
+    </div>
 
-        <div id="win-snake" class="window">
-            <canvas id="s" width="160" height="100"></canvas>
-            <div style="display: flex; justify-content: space-between; font-size: 10px; margin-top: 5px;">
-                <span id="score">Score: 0</span>
-                <span id="hi-score">Best: 0</span>
-            </div>
-        </div>
-
-        <div id="win-click" class="window" style="text-align:center;">
-            <div style="font-size: 10px; color: #888;">PASTEL CLICKER</div>
-            <h2 id="c-count" style="margin: 5px 0;">0</h2>
-            <div id="cookie-visual" style="width:30px; height:30px; background:#ffb7b2; margin: 0 auto; border:2px solid var(--border); border-radius: 50%;"></div>
-            <div style="font-size: 9px; margin-top: 5px;">
-                Auto-Tap: <span id="auto-val">0</span>/sec
-            </div>
+    <div id="w2" class="win">
+        <canvas id="canvas" width="160" height="100"></canvas>
+        <div style="font-size:10px; text-align:center;">
+            Score: <span id="s1">0</span> | Best: <span id="s2">0</span>
         </div>
     </div>
 
-    <div class="screen-bottom">
-        <div class="grid">
-            <div class="btn" onclick="show('win-txt')">TEXT</div>
-            <div class="btn" onclick="show('win-snake')">SNAKE</div>
-            <div class="btn" onclick="show('win-click')">CLICK</div>
-        </div>
+    <div id="w3" class="win" style="text-align:center;">
+        <h2 id="clicks">0</h2>
+        <div style="width:30px; height:30px; background:#ffb7b2; margin:0 auto; border-radius:50%;"></div>
+        <div class="shop-area">Autos: <span id="autos">0</span></div>
+    </div>
+</div>
 
-        <div style="text-align:center; padding: 2px;">
-            <button class="btn" style="width:45px; display:inline-block;" onclick="move(0,-1)">UP</button><br>
-            <button class="btn" style="width:45px; display:inline-block;" onclick="move(-1,0)">L</button>
-            <button id="main-act" class="btn" style="width:45px; display:inline-block;" onclick="action()">OK</button>
-            <button class="btn" style="width:45px; display:inline-block;" onclick="move(1,0)">R</button><br>
-            <button class="btn" style="width:45px; display:inline-block;" onclick="move(0,1)">DN</button>
-        </div>
+<div class="bottom-screen">
+    <div class="menu">
+        <div class="btn" onclick="go('w1')">TEXT</div>
+        <div class="btn" onclick="go('w2')">SNAKE</div>
+        <div class="btn" onclick="go('w3')">CLICK</div>
+    </div>
 
-        <input type="text" id="kb" placeholder="Type..." oninput="sync()">
+    <div style="text-align:center;">
+        <button class="btn" style="width:50px;" onclick="dir(0,-1)">UP</button><br>
+        <button class="btn" style="width:40px;" onclick="dir(-1,0)">L</button>
+        <button class="btn" style="width:60px;" onclick="act()">OK / TAP</button>
+        <button class="btn" style="width:40px;" onclick="dir(1,0)">R</button><br>
+        <button class="btn" style="width:50px;" onclick="dir(0,1)">DOWN</button>
+    </div>
 
-        <div id="clicker-shop" style="display:none; text-align:center;">
-            <button class="shop-btn" onclick="buyAuto()">Buy Auto (10 pts)</button>
-        </div>
+    <input type="text" id="in" placeholder="Type here..." oninput="sync()" style="width:80%; margin:10px 10%;">
+    
+    <div id="shop" style="display:none; text-align:center;">
+        <button class="btn" onclick="buy()">Buy Auto (10 pts)</button>
     </div>
 </div>
 
 <script>
-    // PREVENT SCROLLING - THE ULTIMATE LOCK
-    window.addEventListener('scroll', function() { window.scrollTo(0, 0); });
-    document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
+    var cur = 'w1';
+    var pts = 0;
+    var auto = 0;
+    var hi = 0;
 
-    var mode = 'win-txt';
-    var cookies = 0;
-    var autoClickers = 0;
-    var hiScore = 0;
-
-    function show(id) {
-        var windows = document.getElementsByClassName('window');
-        for(var i=0; i<windows.length; i++) { windows[i].style.display = 'none'; }
-        document.getElementById(id).style.display = 'block';
-        
-        // Toggle Shop
-        document.getElementById('clicker-shop').style.display = (id === 'win-click') ? 'block' : 'none';
-        
-        mode = id;
-        if(id === 'win-snake') startSnake();
+    function go(id) {
+        document.getElementById('w1').className = 'win';
+        document.getElementById('w2').className = 'win';
+        document.getElementById('w3').className = 'win';
+        document.getElementById(id).className = 'win active';
+        document.getElementById('shop').style.display = (id=='w3') ? 'block' : 'none';
+        cur = id;
+        if(id=='w2') start();
     }
 
-    function sync() { document.getElementById('output').innerHTML = document.getElementById('kb').value; }
+    function sync() { document.getElementById('note-out').innerHTML = document.getElementById('in').value; }
 
-    // CLICKER LOGIC
-    function action() {
-        if(mode === 'win-click') {
-            cookies++;
-            updateClicker();
-            // Pulse effect
-            document.getElementById('cookie-visual').style.background = 'white';
-            setTimeout(function(){ document.getElementById('cookie-visual').style.background = '#ffb7b2'; }, 50);
-        }
+    function act() {
+        if(cur == 'w3') { pts++; up(); }
     }
 
-    function buyAuto() {
-        if(cookies >= 10) {
-            cookies -= 10;
-            autoClickers++;
-            updateClicker();
-        }
+    function buy() {
+        if(pts >= 10) { pts -= 10; auto++; up(); }
     }
 
-    function updateClicker() {
-        document.getElementById('c-count').innerHTML = Math.floor(cookies);
-        document.getElementById('auto-val').innerHTML = autoClickers;
+    function up() {
+        document.getElementById('clicks').innerHTML = Math.floor(pts);
+        document.getElementById('autos').innerHTML = auto;
     }
 
-    // Auto-clicker Interval
-    setInterval(function() {
-        if(autoClickers > 0) {
-            cookies += (autoClickers * 0.1);
-            updateClicker();
-        }
-    }, 100);
+    setInterval(function(){ if(auto>0){ pts += (auto*0.1); up(); } }, 100);
 
-    // SNAKE LOGIC
-    var canvas = document.getElementById("s"), ctx = canvas.getContext("2d");
-    var snk, fd, vx, vy, gameTick;
+    // SNAKE
+    var c = document.getElementById("canvas"), x = c.getContext("2d");
+    var s, f, vx, vy, iv;
 
-    function move(x,y) { 
-        if((x !== 0 && vx === -x) || (y !== 0 && vy === -y)) return; // Prevent 180 turns
-        vx=x; vy=y; 
-    }
+    function dir(nx,ny) { vx=nx; vy=ny; }
 
-    function startSnake() {
-        if(gameTick) clearInterval(gameTick);
-        snk = [{x:8,y:5}]; fd = {x:12,y:5}; vx=1; vy=0;
-        gameTick = setInterval(function() {
-            var h = {x: snk[0].x + vx, y: snk[0].y + vy};
-            
-            if(h.x < 0 || h.x >= 20 || h.y < 0 || h.y >= 12.5 || checkSelf(h)) {
-                if(snk.length-1 > hiScore) hiScore = snk.length-1;
-                document.getElementById('hi-score').innerHTML = "Best: " + hiScore;
-                startSnake(); return;
+    function start() {
+        if(iv) clearInterval(iv);
+        s = [{x:8,y:5}]; f = {x:12,y:5}; vx=1; vy=0;
+        iv = setInterval(function() {
+            var h = {x: s[0].x+vx, y: s[0].y+vy};
+            if(h.x<0||h.x>=20||h.y<0||h.y>=12.5) { 
+                if(s.length-1 > hi) hi = s.length-1;
+                document.getElementById('s2').innerHTML = hi;
+                start(); return; 
             }
-
-            snk.unshift(h);
-            if(h.x==fd.x && h.y==fd.y) {
-                fd = {x: Math.floor(Math.random()*19), y: Math.floor(Math.random()*11)};
-                document.getElementById('score').innerHTML = "Score: " + (snk.length - 1);
-            } else { snk.pop(); }
-            
-            ctx.fillStyle="#1a1a1a"; ctx.fillRect(0,0,160,100);
-            ctx.fillStyle="#b8e994"; 
-            for(var i=0; i<snk.length; i++) { ctx.fillRect(snk[i].x*8,snk[i].y*8,7,7); }
-            ctx.fillStyle="#ffb7b2"; ctx.fillRect(fd.x*8,fd.y*8,7,7);
-        }, 150);
-    }
-
-    function checkSelf(h) {
-        for(var i=0; i<snk.length; i++) { if(h.x==snk[i].x && h.y==snk[i].y) return true; }
-        return false;
+            s.unshift(h);
+            if(h.x==f.x && h.y==f.y) {
+                f = {x: Math.floor(Math.random()*19), y: Math.floor(Math.random()*11)};
+                document.getElementById('s1').innerHTML = s.length-1;
+            } else { s.pop(); }
+            x.fillStyle="#000"; x.fillRect(0,0,160,100);
+            x.fillStyle="#b8e994"; for(var i=0;i<s.length;i++) x.fillRect(s[i].x*8,s[i].y*8,7,7);
+            x.fillStyle="#ffb7b2"; x.fillRect(f.x*8,f.y*8,7,7);
+        }, 200);
     }
 </script>
 
