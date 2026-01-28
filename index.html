@@ -2,163 +2,171 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=320, user-scalable=no">
+    <meta name="viewport" content="width=320, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <style>
         :root {
             --bg-top: #fdfcf0; 
             --bg-bottom: #e8f4f8; 
             --border: #7d6e83; 
             --accent: #ffdfba; 
-            --text: #4a4a4a;
         }
 
+        /* THE LOCK: This prevents the 'bounce' and scrolling */
         body, html {
             margin: 0; padding: 0;
+            width: 320px;
+            height: 452px; /* Combined height of both screens minus bars */
+            overflow: hidden;
             background: #222;
             font-family: 'Courier New', monospace;
             image-rendering: pixelated;
+            touch-action: none; /* Disables dragging on modern browsers */
         }
 
-        /* Top Screen (400px wide, but we use 320 for 3DS compatibility) */
         .screen-top {
             width: 320px;
-            height: 212px; /* Adjusted for 3DS browser UI bars */
+            height: 212px;
             background: var(--bg-top);
-            border: 4px solid var(--border);
-            margin: 0 auto;
+            border: 2px solid var(--border);
             position: relative;
-            overflow: hidden;
         }
 
-        /* Bottom Screen */
         .screen-bottom {
             width: 320px;
             height: 240px;
             background: var(--bg-bottom);
-            border: 4px solid var(--border);
-            margin: 0 auto;
+            border: 2px solid var(--border);
         }
 
-        .window {
-            padding: 10px;
-            display: none;
-        }
-
+        .window { display: none; padding: 10px; }
         .active { display: block; }
 
-        /* Pixel Buttons */
+        /* Buttons fixed for 3DS Touch */
         .grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 5px;
-            padding: 5px;
+            display: table;
+            width: 100%;
+            border-spacing: 5px;
         }
-
         .btn {
+            display: table-cell;
             background: var(--accent);
-            border: 2px solid var(--border);
-            height: 45px;
-            line-height: 45px;
+            border: 3px solid var(--border);
+            height: 40px;
+            vertical-align: middle;
             text-align: center;
-            font-size: 12px;
+            font-size: 11px;
             font-weight: bold;
+            cursor: pointer;
         }
 
-        canvas {
-            background: #000;
-            display: block;
-            margin: 0 auto;
-        }
-
-        textarea {
+        #s { background: #000; display: block; margin: 0 auto; border: 1px solid #000; }
+        
+        /* Direct Input Box */
+        #kb {
             width: 90%;
-            height: 100px;
+            margin: 5px 5%;
             border: 2px solid var(--border);
-            font-family: inherit;
+            font-size: 16px; /* Prevents iOS/3DS zoom-on-focus */
         }
     </style>
 </head>
-<body>
+<body scroll="no">
 
-<div class="screen-top">
-    <div id="win-txt" class="window active">
-        <div style="font-size: 10px; background: var(--border); color: white; padding: 2px;">NOTEPAD</div>
-        <p id="output" style="font-size: 14px;">Tap 'TYPE' below...</p>
-    </div>
-
-    <div id="win-snake" class="window">
-        <canvas id="s" width="160" height="100"></canvas>
-        <div id="score" style="font-size: 10px; text-align: center;">Score: 0</div>
-    </div>
-
-    <div id="win-click" class="window" style="text-align:center;">
-        <h1 id="c-count">0</h1>
-        <div style="width:40px; height:40px; background:pink; margin: 0 auto; border:2px solid var(--border);"></div>
-    </div>
-</div>
-
-<div class="screen-bottom">
-    <div class="grid">
-        <div class="btn" onclick="show('win-txt')">TEXT</div>
-        <div class="btn" onclick="show('win-snake')">SNAKE</div>
-        <div class="btn" onclick="show('win-click')">CLICK</div>
-    </div>
-
-    <div id="controls" style="padding: 5px;">
-        <div style="text-align:center;">
-            <button class="btn" style="width:60px;" onclick="move(0,-1)">UP</button><br>
-            <button class="btn" style="width:60px;" onclick="move(-1,0)">L</button>
-            <button class="btn" style="width:60px;" onclick="action()">OK</button>
-            <button class="btn" style="width:60px;" onclick="move(1,0)">R</button><br>
-            <button class="btn" style="width:60px;" onclick="move(0,1)">DN</button>
+<div id="main-container">
+    <div class="screen-top">
+        <div id="win-txt" class="window active">
+            <div style="font-size: 10px; border-bottom: 1px solid #ccc;">NOTEPAD.EXE</div>
+            <p id="output" style="font-size: 14px; word-wrap: break-word;">System Ready.</p>
         </div>
-        
-        <input type="text" id="kb" placeholder="Type here..." style="width:90%; margin-top:5px;" oninput="sync()">
+
+        <div id="win-snake" class="window">
+            <canvas id="s" width="160" height="100"></canvas>
+            <div id="score" style="text-align:center; font-size:10px;">Score: 0</div>
+        </div>
+
+        <div id="win-click" class="window" style="text-align:center;">
+            <h2 id="c-count">0</h2>
+            <div style="width:30px; height:30px; background:pink; margin: 0 auto; border:2px solid var(--border);"></div>
+        </div>
+    </div>
+
+    <div class="screen-bottom">
+        <div class="grid">
+            <div class="btn" onclick="show('win-txt')">TEXT</div>
+            <div class="btn" onclick="show('win-snake')">SNAKE</div>
+            <div class="btn" onclick="show('win-click')">CLICK</div>
+        </div>
+
+        <div style="text-align:center; padding: 5px;">
+            <button class="btn" style="width:50px; display:inline-block;" onclick="move(0,-1)">UP</button><br>
+            <button class="btn" style="width:50px; display:inline-block;" onclick="move(-1,0)">L</button>
+            <button class="btn" style="width:50px; display:inline-block;" onclick="action()">OK</button>
+            <button class="btn" style="width:50px; display:inline-block;" onclick="move(1,0)">R</button><br>
+            <button class="btn" style="width:50px; display:inline-block;" onclick="move(0,1)">DN</button>
+        </div>
+
+        <input type="text" id="kb" placeholder="Tap here to type..." oninput="sync()">
     </div>
 </div>
 
 <script>
-    let mode = 'txt';
-    let cookies = 0;
+    var mode = 'win-txt';
+    var cookies = 0;
+    var gameRunning = false;
 
+    // Fix for 3DS Click Events
     function show(id) {
-        document.querySelectorAll('.window').forEach(w => w.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
-        if(id === 'win-snake') startSnake();
+        var windows = document.getElementsByClassName('window');
+        for(var i=0; i<windows.length; i++) { windows[i].style.display = 'none'; }
+        document.getElementById(id).style.display = 'block';
         mode = id;
+        if(id === 'win-snake' && !gameRunning) { startSnake(); }
     }
 
     function sync() {
-        document.getElementById('output').innerText = document.getElementById('kb').value;
+        document.getElementById('output').innerHTML = document.getElementById('kb').value;
     }
 
     function action() {
         if(mode === 'win-click') {
             cookies++;
-            document.getElementById('c-count').innerText = cookies;
+            document.getElementById('c-count').innerHTML = cookies;
         }
     }
 
-    // SNAKE MINI
-    let canvas = document.getElementById("s"), ctx = canvas.getContext("2d");
-    let snk = [{x:8,y:5}], fd = {x:5,y:5}, vx=1, vy=0;
-    
+    // SNAKE ENGINE
+    var canvas = document.getElementById("s"), ctx = canvas.getContext("2d");
+    var snk = [{x:8,y:5}], fd = {x:5,y:5}, vx=1, vy=0;
+
     function move(x,y) { vx=x; vy=y; }
 
     function startSnake() {
-        setInterval(() => {
-            let h = {x: snk[0].x + vx, y: snk[0].y + vy};
+        gameRunning = true;
+        setInterval(function() {
+            var h = {x: snk[0].x + vx, y: snk[0].y + vy};
+            
+            // Wall Collision
+            if(h.x < 0 || h.x >= 20 || h.y < 0 || h.y >= 12.5) {
+                snk = [{x:8,y:5}]; vx=1; vy=0;
+                return;
+            }
+
             snk.unshift(h);
             if(h.x==fd.x && h.y==fd.y) {
-                fd = {x: Math.floor(Math.random()*20), y: Math.floor(Math.random()*12)};
-                document.getElementById('score').innerText = "Score: " + snk.length;
+                fd = {x: Math.floor(Math.random()*19), y: Math.floor(Math.random()*11)};
+                document.getElementById('score').innerHTML = "Score: " + (snk.length - 1);
             } else { snk.pop(); }
             
             ctx.fillStyle="black"; ctx.fillRect(0,0,160,100);
-            ctx.fillStyle="lime"; snk.forEach(p=>ctx.fillRect(p.x*8,p.y*8,7,7));
-            ctx.fillStyle="red"; ctx.fillRect(fd.x*8,fd.y*8,7,7);
-        }, 200);
+            ctx.fillStyle="#b8e994"; // Pastel Snake
+            for(var i=0; i<snk.length; i++) { ctx.fillRect(snk[i].x*8,snk[i].y*8,7,7); }
+            ctx.fillStyle="#f8a5c2"; // Pastel Food
+            ctx.fillRect(fd.x*8,fd.y*8,7,7);
+        }, 250);
     }
+
+    // Disable dragging on 3DS
+    document.addEventListener('touchmove', function(e) { e.preventDefault(); }, { passive: false });
 </script>
 
 </body>
